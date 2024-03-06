@@ -1,0 +1,25 @@
+# settings.json (Ctrl+Shift+P > Preferences: Open User Settings (JSON))
+{
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.completeFunctionParens": true,
+    "python.languageServer": "Pylance",
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.variableTypes": true,
+}
+
+# .vscode/launch.json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current Folder/run.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${fileDirname}/run.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
+
+Ruff Linter:
+https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff
