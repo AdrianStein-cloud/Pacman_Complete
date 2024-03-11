@@ -16,10 +16,10 @@ class Pacman(Entity):
         self.setBetweenNodes(LEFT)
         self.alive = True
         self.sprites = PacmanSprites(self)
-        self.goal = None
         self.directionMethod = self.goalDirectionDij
         self.nodes = nodes
         self.unvisitedNodes = list(nodes.costs)
+        self.goal = self.unvisitedNodes[0]
 
     def reset(self):
         Entity.reset(self)
@@ -89,10 +89,15 @@ class Pacman(Entity):
     
     #############
     def getDijkstraPath(self):
-        self.goal = self.unvisitedNodes[0]
-        
         pacmanTarget = self.target
         pacmanTarget = self.nodes.getVectorFromLUTNode(pacmanTarget)
+
+        if self.goal == pacmanTarget and len(self.unvisitedNodes) > 1:
+            self.unvisitedNodes.remove(self.goal)
+            self.goal = self.unvisitedNodes[0]
+
+        if pacmanTarget in self.unvisitedNodes:
+            self.unvisitedNodes.remove(pacmanTarget)
 
         if pacmanTarget == self.goal:
             return [pacmanTarget]  # Pacman is already at the goal, return the current position
@@ -119,20 +124,27 @@ class Pacman(Entity):
 
         print("path: ", path)
 
-        ghostTarget = self.target
-        ghostTarget = self.nodes.getVectorFromLUTNode(ghostTarget)
         if len(path) < 2:
             return choice(directions)  # No more path to follow, return a random direction
 
-        nextGhostNode = path[1]
-        if ghostTarget[0] > nextGhostNode[0] and 2 in directions:  # left
+        nextNode = path[1]
+        pacmanPosition = self.nodes.getVectorFromLUTNode(self.target)  # Get Pacman's current position
+        pacmanX, pacmanY = pacmanPosition[0], pacmanPosition[1]
+        nextNodeX, nextNodeY = nextNode[0], nextNode[1]
+
+        dx = nextNodeX - pacmanX
+        dy = nextNodeY - pacmanY
+
+        if dx < 0 and 2 in directions:  # move left
             return 2
-        if ghostTarget[0] < nextGhostNode[0] and -2 in directions:  # right
+        if dx > 0 and -2 in directions:  # move right
             return -2
-        if ghostTarget[1] > nextGhostNode[1] and 1 in directions:  # up
+        if dy < 0 and 1 in directions:  # move up
             return 1
-        if ghostTarget[1] < nextGhostNode[1] and -1 in directions:  # down
+        if dy > 0 and -1 in directions:  # move down
             return -1
-        else:
-            return choice(directions)
+
+        return choice(directions)
+
+
 
