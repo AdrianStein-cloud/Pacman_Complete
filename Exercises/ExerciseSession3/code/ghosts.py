@@ -27,13 +27,16 @@ class Ghost(Entity):
     def getDijkstraPath(self, directions):
         lastPacmanNode = self.pacman.target
         lastPacmanNode = self.nodes.getVectorFromLUTNode(lastPacmanNode)
+        print("lastPacmanNode: ", lastPacmanNode)
         ghostTarget = self.target
         ghostTarget = self.nodes.getVectorFromLUTNode(ghostTarget)
 
         # previous_nodes, shortest_path = dijkstra(self.nodes, ghostTarget)
         previous_nodes, shortest_path = dijkstra_or_a_star(self.nodes, ghostTarget, a_star=False)
         path = []
+        print("lastPacmanNode: ", lastPacmanNode)
         node = lastPacmanNode
+        print("ghostTarget: ", ghostTarget)
         while node != ghostTarget:
             path.append(node)
             node = previous_nodes[node]

@@ -1,12 +1,14 @@
+from random import choice
 import pygame
 from pygame.locals import *
 from vector import Vector2
 from constants import *
 from entity import Entity
 from sprites import PacmanSprites
+from algorithms import dijkstra, print_result, dijkstra_or_a_star
 
 class Pacman(Entity):
-    def __init__(self, node):
+    def __init__(self, node, nodes):
         Entity.__init__(self, node )
         self.name = PACMAN    
         self.color = YELLOW
@@ -14,6 +16,10 @@ class Pacman(Entity):
         self.setBetweenNodes(LEFT)
         self.alive = True
         self.sprites = PacmanSprites(self)
+        self.goal = None
+        self.directionMethod = self.goalDirectionDij
+        self.nodes = nodes
+        self.unvisitedNodes = list(nodes.costs)
 
     def reset(self):
         Entity.reset(self)
@@ -30,7 +36,8 @@ class Pacman(Entity):
     def update(self, dt):	
         self.sprites.update(dt)
         self.position += self.directions[self.direction]*self.speed*dt
-        direction = self.getValidKey()
+        directions = self.validDirections()
+        direction = self.directionMethod(directions)
         if self.overshotTarget():
             self.node = self.target
             if self.node.neighbors[PORTAL] is not None:
@@ -64,7 +71,10 @@ class Pacman(Entity):
         for pellet in pelletList:
             if self.collideCheck(pellet):
                 return pellet
-        return None    
+        return None
+    
+    def setPelletList(self, pelletList):
+        self.pelletList = pelletList
     
     def collideGhost(self, ghost):
         return self.collideCheck(ghost)
@@ -76,3 +86,53 @@ class Pacman(Entity):
         if dSquared <= rSquared:
             return True
         return False
+    
+    #############
+    def getDijkstraPath(self):
+        self.goal = self.unvisitedNodes[0]
+        
+        pacmanTarget = self.target
+        pacmanTarget = self.nodes.getVectorFromLUTNode(pacmanTarget)
+
+        if pacmanTarget == self.goal:
+            return [pacmanTarget]  # Pacman is already at the goal, return the current position
+
+        previous_nodes, shortest_path = dijkstra_or_a_star(self.nodes, pacmanTarget, a_star=False)
+        path = []
+        node = self.goal
+        while node != pacmanTarget:
+            if node not in previous_nodes:  # Pacman cannot reach the goal, return empty path
+                return []
+            path.append(node)
+            node = previous_nodes[node]
+        path.append(pacmanTarget)
+        path.reverse()
+        return path
+
+
+
+    # Chooses direction in which to turn based on the dijkstra
+    # returned path
+    def goalDirectionDij(self, directions):
+        path = self.getDijkstraPath()  # Assuming self.getDijkstraPath() returns a list of nodes
+        self.path = path
+
+        print("path: ", path)
+
+        ghostTarget = self.target
+        ghostTarget = self.nodes.getVectorFromLUTNode(ghostTarget)
+        if len(path) < 2:
+            return choice(directions)  # No more path to follow, return a random direction
+
+        nextGhostNode = path[1]
+        if ghostTarget[0] > nextGhostNode[0] and 2 in directions:  # left
+            return 2
+        if ghostTarget[0] < nextGhostNode[0] and -2 in directions:  # right
+            return -2
+        if ghostTarget[1] > nextGhostNode[1] and 1 in directions:  # up
+            return 1
+        if ghostTarget[1] < nextGhostNode[1] and -1 in directions:  # down
+            return -1
+        else:
+            return choice(directions)
+
