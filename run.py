@@ -62,6 +62,8 @@ class GameController(object):
         self.ghosts.setSpawnNode(self.nodes.getNodeFromTiles(*self.mazedata.obj.addOffset(2, 3)))
         self.ghosts.blinky.setStartNode(self.nodes.getNodeFromTiles(*self.mazedata.obj.addOffset(2, 0)))
 
+        self.pacman.setGhosts(self.ghosts)
+
         self.nodes.denyHomeAccess(self.pacman)
         self.nodes.denyHomeAccessList(self.ghosts)
         self.ghosts.inky.startNode.denyAccess(RIGHT, self.ghosts.inky)

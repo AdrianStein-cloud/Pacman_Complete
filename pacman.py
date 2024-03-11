@@ -5,7 +5,7 @@ from vector import Vector2
 from constants import *
 from entity import Entity
 from sprites import PacmanSprites
-from algorithms import dijkstra, print_result, dijkstra_or_a_star
+from algorithms import a_star
 
 class Pacman(Entity):
     def __init__(self, node, nodes):
@@ -16,10 +16,15 @@ class Pacman(Entity):
         self.setBetweenNodes(LEFT)
         self.alive = True
         self.sprites = PacmanSprites(self)
-        self.directionMethod = self.goalDirectionDij
+        self.directionMethod = self.goalDirectionAStar
         self.nodes = nodes
         self.unvisitedNodes = list(nodes.costs)
         self.goal = self.unvisitedNodes[0]
+        self.debugMode = True
+        self.ghosts = None
+
+    def setGhosts(self, ghosts):
+        self.ghosts = ghosts
 
     def reset(self):
         Entity.reset(self)
@@ -88,7 +93,7 @@ class Pacman(Entity):
         return False
     
     #############
-    def getDijkstraPath(self):
+    def getAStarPath(self):
         pacmanTarget = self.target
         pacmanTarget = self.nodes.getVectorFromLUTNode(pacmanTarget)
 
@@ -102,7 +107,7 @@ class Pacman(Entity):
         if pacmanTarget == self.goal:
             return [pacmanTarget]  # Pacman is already at the goal, return the current position
 
-        previous_nodes, shortest_path = dijkstra_or_a_star(self.nodes, pacmanTarget, a_star=False)
+        previous_nodes, shortest_path = a_star(self.nodes, pacmanTarget, ghosts=self.ghosts)
         path = []
         node = self.goal
         while node != pacmanTarget:
@@ -118,33 +123,35 @@ class Pacman(Entity):
 
     # Chooses direction in which to turn based on the dijkstra
     # returned path
-    def goalDirectionDij(self, directions):
-        path = self.getDijkstraPath()  # Assuming self.getDijkstraPath() returns a list of nodes
-        self.path = path
+    def goalDirectionAStar(self, directions):
+            path = self.getAStarPath()
+            self.path = path
 
-        print("path: ", path)
+            print("path: ", path)
 
-        if len(path) < 2:
-            return choice(directions)  # No more path to follow, return a random direction
+            if len(path) < 2:
+                return choice(directions)  # No more path to follow, return a random direction
 
-        nextNode = path[1]
-        pacmanPosition = self.nodes.getVectorFromLUTNode(self.target)  # Get Pacman's current position
-        pacmanX, pacmanY = pacmanPosition[0], pacmanPosition[1]
-        nextNodeX, nextNodeY = nextNode[0], nextNode[1]
+            nextNode = path[1]
+            pacmanPosition = self.nodes.getVectorFromLUTNode(self.target)  # Get Pacman's current position
+            pacmanX, pacmanY = pacmanPosition[0], pacmanPosition[1]
+            nextNodeX, nextNodeY = nextNode[0], nextNode[1]
 
-        dx = nextNodeX - pacmanX
-        dy = nextNodeY - pacmanY
+            dx = nextNodeX - pacmanX
+            dy = nextNodeY - pacmanY
 
-        if dx < 0 and 2 in directions:  # move left
-            return 2
-        if dx > 0 and -2 in directions:  # move right
-            return -2
-        if dy < 0 and 1 in directions:  # move up
-            return 1
-        if dy > 0 and -1 in directions:  # move down
-            return -1
+            if dx < 0 and 2 in directions:  # move left
+                return LEFT
+            if dx > 0 and -2 in directions:  # move right
+                return RIGHT
+            if dy < 0 and 1 in directions:  # move up
+                return UP
+            if dy > 0 and -1 in directions:  # move down
+                return DOWN
 
-        return choice(directions)
+            return choice(directions)
+
+
 
 
 

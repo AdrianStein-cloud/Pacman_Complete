@@ -21,6 +21,7 @@ class Entity(object):
         self.setStartNode(node)
         self.image = None
         self.path = None
+        self.debugMode = False
 
     def setPosition(self):
         self.position = self.node.position.copy()
@@ -126,13 +127,17 @@ class Entity(object):
             else:
                 p = self.position.asInt()
                 pygame.draw.circle(screen, self.color, p, self.radius)
-            # if path is not none, for each node in path, draw line between nodes
-            if self.path is not None:
-                for i in range(len(self.path)-1):
-                    p1 = self.path[i]
-                    p2 = self.path[i+1]
-                    pygame.draw.line(screen, RED, p1, p2, 2)
-                    # draw circle at last node
-                if len(self.path) - 2 >= 0:
-                    pygame.draw.circle(screen, RED, self.path[len(self.path) - 1], 5)
+            if self.debugMode:
+                # if path is not none, for each node in path, draw line between nodes
+                if self.path is not None:
+                    for i in range(len(self.path)-1):
+                        p1 = self.path[i]
+                        p2 = self.path[i+1]
+                        pygame.draw.line(screen, RED, p1, p2, 2)
+                        # draw circle at last node
+                    if len(self.path) - 2 >= 0:
+                        pygame.draw.circle(screen, RED, self.path[len(self.path) - 1], 5)
+                # render target
+                if self.target is not None:
+                    pygame.draw.circle(screen, GREEN, self.target.position.asInt(), 5)
 
