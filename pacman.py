@@ -22,6 +22,8 @@ class Pacman(Entity):
         self.goal = self.unvisitedNodes[0]
         self.debugMode = True
         self.ghosts = None
+        self.path = None
+        self.oldTarget = None
 
     def setGhosts(self, ghosts):
         self.ghosts = ghosts
@@ -38,27 +40,28 @@ class Pacman(Entity):
         self.alive = False
         self.direction = STOP
 
+    def validDirections(self):
+        directions = []
+        for key in [UP, DOWN, LEFT, RIGHT]:
+            if self.validDirection(key):
+                directions.append(key)
+        return directions
+
     def update(self, dt):	
         self.sprites.update(dt)
         self.position += self.directions[self.direction]*self.speed*dt
-        directions = self.validDirections()
-        direction = self.directionMethod(directions)
+         
         if self.overshotTarget():
             self.node = self.target
-            if self.node.neighbors[PORTAL] is not None:
-                self.node = self.node.neighbors[PORTAL]
+            directions = self.validDirections()
+            direction = self.directionMethod(directions)
             self.target = self.getNewTarget(direction)
             if self.target is not self.node:
                 self.direction = direction
             else:
                 self.target = self.getNewTarget(self.direction)
 
-            if self.target is self.node:
-                self.direction = STOP
             self.setPosition()
-        else: 
-            if self.oppositeDirection(direction):
-                self.reverseDirection()
 
     def getValidKey(self):
         key_pressed = pygame.key.get_pressed()
@@ -97,12 +100,17 @@ class Pacman(Entity):
         pacmanTarget = self.target
         pacmanTarget = self.nodes.getVectorFromLUTNode(pacmanTarget)
 
+        if pacmanTarget != self.oldTarget:
+            if self.oldTarget is not None and self.oldTarget in self.unvisitedNodes:
+                self.unvisitedNodes.remove(self.oldTarget)
+            self.oldTarget = pacmanTarget
+
         if self.goal == pacmanTarget and len(self.unvisitedNodes) > 1:
             self.unvisitedNodes.remove(self.goal)
             self.goal = self.unvisitedNodes[0]
 
-        if pacmanTarget in self.unvisitedNodes:
-            self.unvisitedNodes.remove(pacmanTarget)
+        if (self.position.x, self.position.y) in self.unvisitedNodes:
+            self.unvisitedNodes.remove((self.position.x, self.position.y))
 
         if pacmanTarget == self.goal:
             return [pacmanTarget]  # Pacman is already at the goal, return the current position
@@ -111,8 +119,15 @@ class Pacman(Entity):
         path = []
         node = self.goal
         while node != pacmanTarget:
-            if node not in previous_nodes:  # Pacman cannot reach the goal, return empty path
-                return []
+            if node not in previous_nodes:  # Pacman cannot reach the goal
+                for unvisited in self.unvisitedNodes:  # Try all other unvisited nodes
+                    previous_nodes, shortest_path = a_star(self.nodes, unvisited, ghosts=self.ghosts)
+                    if unvisited in previous_nodes:  # Found a reachable unvisited node
+                        self.goal = unvisited
+                        break
+                else:  # No reachable unvisited nodes found
+                    print("Im a failure")
+                    return []
             path.append(node)
             node = previous_nodes[node]
         path.append(pacmanTarget)
@@ -127,9 +142,8 @@ class Pacman(Entity):
             path = self.getAStarPath()
             self.path = path
 
-            print("path: ", path)
-
             if len(path) < 2:
+                print("Random")
                 return choice(directions)  # No more path to follow, return a random direction
 
             nextNode = path[1]
@@ -140,14 +154,20 @@ class Pacman(Entity):
             dx = nextNodeX - pacmanX
             dy = nextNodeY - pacmanY
 
-            if dx < 0 and 2 in directions:  # move left
+            if dx < 0 and LEFT in directions:  # move left
+                print("Left")
                 return LEFT
-            if dx > 0 and -2 in directions:  # move right
+            if dx > 0 and RIGHT in directions:  # move right
+                print("Right")
                 return RIGHT
-            if dy < 0 and 1 in directions:  # move up
+            if dy < 0 and UP in directions:  # move up
+                print("Up")
                 return UP
-            if dy > 0 and -1 in directions:  # move down
+            if dy > 0 and DOWN in directions:  # move down
+                print("Down")
                 return DOWN
+            
+            print("directions: ", directions)
 
             return choice(directions)
 

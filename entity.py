@@ -140,4 +140,7 @@ class Entity(object):
                 # render target
                 if self.target is not None:
                     pygame.draw.circle(screen, GREEN, self.target.position.asInt(), 5)
+                # render all unvisited nodes
+                for node in self.unvisitedNodes:
+                    pygame.draw.circle(screen, RED, node, 5)
 

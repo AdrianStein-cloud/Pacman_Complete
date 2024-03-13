@@ -21,6 +21,7 @@ class Entity(object):
         self.disablePortal = False
         self.goal = None
         self.directionMethod = self.randomDirection
+        self.path = None
 
     def setPosition(self):
         self.position = self.node.position.copy()
@@ -73,6 +74,14 @@ class Entity(object):
         if self.visible:
             p = self.position.asInt()
             pygame.draw.circle(screen, self.color, p, self.radius)
+        if self.path is not None:
+                    for i in range(len(self.path)-1):
+                        p1 = self.path[i]
+                        p2 = self.path[i+1]
+                        pygame.draw.line(screen, RED, p1, p2, 2)
+                        # draw circle at last node
+                    if len(self.path) - 2 >= 0:
+                        pygame.draw.circle(screen, RED, self.path[len(self.path) - 1], 5)
 
     def update(self, dt):
         self.position += self.directions[self.direction]*self.speed*dt
