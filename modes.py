@@ -38,6 +38,7 @@ class ModeController(object):
             self.timer += dt
             if self.timer >= self.time:
                 self.time = None
+                self.entity.setSpeed(100)
                 self.entity.normalMode()
                 self.current = self.mainmode.mode
         elif self.current in [SCATTER, CHASE]:
@@ -45,6 +46,7 @@ class ModeController(object):
 
         if self.current is SPAWN:
             if self.entity.node == self.entity.spawnNode:
+                self.entity.setSpeed(100)
                 self.entity.normalMode()
                 self.current = self.mainmode.mode
 

@@ -1,4 +1,5 @@
 from random import choice
+from FSM import StateMachine
 import pygame
 from pygame.locals import *
 from vector import Vector2
@@ -16,7 +17,7 @@ class Pacman(Entity):
         self.setBetweenNodes(LEFT)
         self.alive = True
         self.sprites = PacmanSprites(self)
-        self.directionMethod = self.goalDirectionFlee
+        self.directionMethod = self.goalDirectionAStar
         self.nodes = nodes
         self.unvisitedNodes = list(nodes.costs)
         self.goal = self.unvisitedNodes[0]
@@ -24,6 +25,15 @@ class Pacman(Entity):
         self.ghosts = None
         self.path = None
         self.oldTarget = None
+
+        # FSM   
+        self.states = [FLEE, SEEK]
+        self.myState = SEEK
+        self.FSM = StateMachine(self.myState)
+
+        self.FSM_decision()
+
+        self.a_star_failed = False
 
     def setGhosts(self, ghosts):
         self.ghosts = ghosts
@@ -48,8 +58,11 @@ class Pacman(Entity):
         return directions
 
     def update(self, dt):	
+        self.advancedFSM()
         self.sprites.update(dt)
         self.position += self.directions[self.direction]*self.speed*dt
+
+        self.path = self.getAStarPath()
          
         if self.overshotTarget():
             self.node = self.target
@@ -126,18 +139,19 @@ class Pacman(Entity):
                         self.goal = unvisited
                         break
                 else:  # No reachable unvisited nodes found
-                    print("Failed")
+                    self.a_star_failed = True
                     return []
             path.append(node)
             node = previous_nodes[node]
         path.append(pacmanTarget)
         path.reverse()
+        self.a_star_failed = False
         return path
     
     # Chooses direction in which to turn based on a star
     def goalDirectionAStar(self, directions):
-            path = self.getAStarPath()
-            self.path = path
+            
+            path = self.path
 
             if len(path) < 2:
                 print("Random")
@@ -171,23 +185,40 @@ class Pacman(Entity):
             distances.append(vec.magnitudeSquared())
         return distances
     
+    def closestGhost(self):
+        distances = self.distancesToGhosts(self.node)
+        index = distances.index(min(distances))
+        return list(self.ghosts)[index]
+    
     def goalDirectionFlee(self, directions):
-        # Find the direction that moves Pacman farthest away from the nearest ghost
-        max_distance = 0
-        flee_direction = None
+        distances = []
         for direction in directions:
-            node = self.node.neighbors[direction]  # Get the neighbor node in the specified direction
+            vec = self.node.position + self.directions[direction]*TILEWIDTH - self.closestGhost().position
+            distances.append(vec.magnitudeSquared())
+        index = distances.index(max(distances))
+        return directions[index]
+    
 
-            # Calculate the distance to the nearest ghost from the neighbor node
-            nearest_ghost_distance = min(self.distancesToGhosts(node))
+    def FSM_decision(self):
+        if self.myState == FLEE:
+            self.directionMethod = self.goalDirectionFlee
+        elif self.myState == SEEK:
+            self.directionMethod = self.goalDirectionAStar
+        else:
+            self.myState = choice(self.states)
 
-            # Check if moving in this direction increases the distance from the nearest ghost
-            if nearest_ghost_distance > max_distance:
-                max_distance = nearest_ghost_distance
-                flee_direction = direction
+    def advancedFSM(self):
+        distance_to_ghost = min(self.distancesToGhosts(self.node))
 
-        # Return the flee direction
-        return flee_direction
+        new_state = self.FSM.updateState(distance_to_ghost, self.a_star_failed)
+
+        # print(new_state)
+        if new_state == SEEK: 
+            self.directionMethod = self.goalDirectionAStar
+        elif new_state == FLEE:
+            self.directionMethod = self.goalDirectionFlee
+
+        self.old_state = new_state
 
 
 

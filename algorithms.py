@@ -1,4 +1,6 @@
 import sys
+
+from constants import FREIGHT
 #########
 # A*
 def heuristic(node1, node2):
@@ -8,25 +10,13 @@ def heuristic(node1, node2):
 def a_star(nodes, start_node, ghosts=[]):
 
     unvisited_nodes = dict(nodes.costs)
-    try:
-        del unvisited_nodes[(ghosts.blinky.target.position.x, ghosts.blinky.target.position.y)]
-    except:
-        pass
 
-    try:
-        del unvisited_nodes[(ghosts.pinky.target.position.x, ghosts.pinky.target.position.y)]
-    except:
-        pass
-
-    try:
-        del unvisited_nodes[(ghosts.inky.target.position.x, ghosts.inky.target.position.y)]
-    except:
-        pass
-
-    try:
-        del unvisited_nodes[(ghosts.clyde.target.position.x, ghosts.clyde.target.position.y)]
-    except:
-        pass
+    for ghost in ghosts:
+        if ghost.mode.current != FREIGHT:
+            try:
+                del unvisited_nodes[(ghost.target.position.x, ghost.target.position.y)]
+            except:
+                pass
 
     unvisited_nodes = list(unvisited_nodes)
 
