@@ -16,7 +16,7 @@ class Pacman(Entity):
         self.setBetweenNodes(LEFT)
         self.alive = True
         self.sprites = PacmanSprites(self)
-        self.directionMethod = self.goalDirectionAStar
+        self.directionMethod = self.goalDirectionFlee
         self.nodes = nodes
         self.unvisitedNodes = list(nodes.costs)
         self.goal = self.unvisitedNodes[0]
@@ -126,18 +126,15 @@ class Pacman(Entity):
                         self.goal = unvisited
                         break
                 else:  # No reachable unvisited nodes found
-                    print("Im a failure")
+                    print("Failed")
                     return []
             path.append(node)
             node = previous_nodes[node]
         path.append(pacmanTarget)
         path.reverse()
         return path
-
-
-
-    # Chooses direction in which to turn based on the dijkstra
-    # returned path
+    
+    # Chooses direction in which to turn based on a star
     def goalDirectionAStar(self, directions):
             path = self.getAStarPath()
             self.path = path
@@ -155,21 +152,45 @@ class Pacman(Entity):
             dy = nextNodeY - pacmanY
 
             if dx < 0 and LEFT in directions:  # move left
-                print("Left")
                 return LEFT
             if dx > 0 and RIGHT in directions:  # move right
-                print("Right")
                 return RIGHT
             if dy < 0 and UP in directions:  # move up
-                print("Up")
                 return UP
             if dy > 0 and DOWN in directions:  # move down
-                print("Down")
                 return DOWN
             
             print("directions: ", directions)
 
             return choice(directions)
+    
+    def distancesToGhosts(self, node):
+        distances = []
+        for ghost in self.ghosts:
+            vec = node.position - ghost.target.position
+            distances.append(vec.magnitudeSquared())
+        return distances
+    
+    def goalDirectionFlee(self, directions):
+        # Find the direction that moves Pacman farthest away from the nearest ghost
+        max_distance = 0
+        flee_direction = None
+        for direction in directions:
+            node = self.node.neighbors[direction]  # Get the neighbor node in the specified direction
+
+            # Calculate the distance to the nearest ghost from the neighbor node
+            nearest_ghost_distance = min(self.distancesToGhosts(node))
+
+            # Check if moving in this direction increases the distance from the nearest ghost
+            if nearest_ghost_distance > max_distance:
+                max_distance = nearest_ghost_distance
+                flee_direction = direction
+
+        # Return the flee direction
+        return flee_direction
+
+
+
 
 
 

@@ -143,4 +143,6 @@ class Entity(object):
                 # render all unvisited nodes
                 for node in self.unvisitedNodes:
                     pygame.draw.circle(screen, RED, node, 5)
+                # render circle 5 radius around node
+                pygame.draw.circle(screen, RED, self.position.asInt(), 120, 1)
 
