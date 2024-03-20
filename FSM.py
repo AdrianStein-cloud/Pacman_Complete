@@ -19,14 +19,14 @@ class Transition(object):
                 return self.flee_2_seek(distance_to_ghost, a_star_failed)
 
     def seek_2_flee(self, distance_to_ghost, a_star_failed):
-        if distance_to_ghost < 1500 or a_star_failed:
+        if distance_to_ghost < 1500 or a_star_failed: # If the ghost is too close or the A* algorithm failed, change from seek to flee
             print("seek -> flee")
             return True
         else:
             return False
         
     def flee_2_seek(self, distance_to_ghost, a_star_failed):
-        if distance_to_ghost > 2000 and not a_star_failed:
+        if distance_to_ghost > 2000 and not a_star_failed: # If the ghost is far enough away and the A* algorithm didn't fail, change from flee to seek
             print("flee -> seek")
             return True
         else:
@@ -41,11 +41,11 @@ class State(object):
         # SEEK
         if self.state == SEEK:
             self.flee = state1
-            self.seek_2_flee = Transition(self.state, self.flee)
+            self.seek_2_flee = Transition(self.state, self.flee) # Transition from seek to flee
         # FLEE
         if self.state == FLEE:
             self.seek = state1
-            self.flee_2_seek = Transition(self.state, self.seek)
+            self.flee_2_seek = Transition(self.state, self.seek) # Transition from flee to seek
 
     # Return which transitions are possible from each state
     def getTransitions(self):
@@ -75,7 +75,7 @@ class StateMachine(object):
         
         
     # Checks and applies transitions, returning a list of actions.
-    def updateState(self, distance_to_ghost, a_star_failed):
+    def updateState(self, distance_to_ghost, a_star_failed): # distance_to_ghost is the distance to the closest ghost, a_star_failed is a boolean that is True if the A* algorithm failed
         # Assume no transition is triggered 
         triggeredTransition = None
 

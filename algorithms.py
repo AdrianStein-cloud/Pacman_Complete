@@ -1,6 +1,6 @@
 import sys
 
-from constants import FREIGHT
+from constants import FREIGHT, SPAWN
 #########
 # A*
 def heuristic(node1, node2):
@@ -11,9 +11,9 @@ def a_star(nodes, start_node, ghosts=[]):
 
     unvisited_nodes = dict(nodes.costs)
 
-    for ghost in ghosts:
-        if ghost.mode.current != FREIGHT:
-            try:
+    for ghost in ghosts: # A-Star should avoid the ghosts, unless they are in freight or spawn mode. It does this by removing the ghost's target node from the unvisited nodes.
+        if ghost.mode.current != FREIGHT or ghost.mode.current != SPAWN:
+            try: 
                 del unvisited_nodes[(ghost.target.position.x, ghost.target.position.y)]
             except:
                 pass
@@ -24,9 +24,9 @@ def a_star(nodes, start_node, ghosts=[]):
     previous_nodes = {}
 
     max_value = sys.maxsize
-    for node in unvisited_nodes:
+    for node in unvisited_nodes: # Initialize the shortest path to all nodes as infinity
         shortest_path[node] = max_value
-    shortest_path[start_node] = 0
+    shortest_path[start_node] = 0 # The shortest path to the start node is 0...
 
     while unvisited_nodes:
         current_min_node = None
