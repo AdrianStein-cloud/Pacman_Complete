@@ -28,20 +28,35 @@ class Entity(object):
 
     def update(self, dt):
         self.position += self.directions[self.direction]*self.speed*dt
-         
+
+        # Check if the entity has overshot its target
         if self.overshotTarget():
             self.node = self.target
+
+            # Get the valid directions the entity can move in from its current node
             directions = self.validDirections()
+
+            # Choose a direction to move in based on the entity's direction method
             direction = self.directionMethod(directions)
+
+            # If portals are not disabled and there's a portal at the current node
             if not self.disablePortal:
                 if self.node.neighbors[PORTAL] is not None:
+                    # Move the entity to the node connected by the portal
                     self.node = self.node.neighbors[PORTAL]
+
+            # Get a new target node based on the chosen direction
             self.target = self.getNewTarget(direction)
+
+            # If the new target is not the current node
             if self.target is not self.node:
+                # Update the entity's direction to the chosen direction
                 self.direction = direction
             else:
+                # If the new target is the current node, get a new target based on the entity's current direction
                 self.target = self.getNewTarget(self.direction)
 
+            # Update the entity's position to match its current node
             self.setPosition()
           
     def validDirection(self, direction):
@@ -143,6 +158,4 @@ class Entity(object):
                 # render all unvisited nodes
                 for node in self.unvisitedNodes:
                     pygame.draw.circle(screen, RED, node, 5)
-                # render circle 5 radius around node
-                pygame.draw.circle(screen, RED, self.position.asInt(), 100, 1)
 

@@ -6,7 +6,7 @@ from vector import Vector2
 from constants import *
 from entity import Entity
 from sprites import PacmanSprites
-from algorithms import a_star
+from algorithms import a_star, heuristic
 
 class Pacman(Entity):
     def __init__(self, node, nodes):
@@ -19,8 +19,8 @@ class Pacman(Entity):
         self.sprites = PacmanSprites(self)
         self.directionMethod = self.goalDirectionAStar
         self.nodes = nodes
-        self.unvisitedNodes = list(nodes.costs)
-        self.goal = self.unvisitedNodes[0]
+        self.unvisitedNodes = self.getImportantNodes()
+        self.goal = self.unvisitedNodes[44]
         self.debugMode = True
         self.ghosts = None
         self.path = None
@@ -34,6 +34,20 @@ class Pacman(Entity):
         self.FSM_decision()
 
         self.a_star_failed = False
+
+    def getImportantNodes(self):
+        temp_list = list(self.nodes.costs)
+        del temp_list[22]
+        del temp_list[22]
+        del temp_list[22]
+        del temp_list[22]
+        del temp_list[22]
+        del temp_list[23]
+        del temp_list[23]
+        del temp_list[24]
+        del temp_list[24]
+        del temp_list[24]
+        return temp_list
 
     def setGhosts(self, ghosts):
         self.ghosts = ghosts
@@ -113,6 +127,13 @@ class Pacman(Entity):
         pacmanTarget = self.target
         pacmanTarget = self.nodes.getVectorFromLUTNode(pacmanTarget)
 
+        if len(self.unvisitedNodes) <= 0:
+            self.unvisitedNodes = self.getImportantNodes()
+
+        self.unvisitedNodes.sort(key=lambda node: heuristic(node, pacmanTarget))
+        self.goal = self.unvisitedNodes[0]
+            
+
         if pacmanTarget != self.oldTarget:
             if self.oldTarget is not None and self.oldTarget in self.unvisitedNodes:
                 self.unvisitedNodes.remove(self.oldTarget)
@@ -120,7 +141,7 @@ class Pacman(Entity):
 
         if self.goal == pacmanTarget and len(self.unvisitedNodes) > 1:
             self.unvisitedNodes.remove(self.goal)
-            self.goal = self.unvisitedNodes[0]
+            
 
         if (self.position.x, self.position.y) in self.unvisitedNodes:
             self.unvisitedNodes.remove((self.position.x, self.position.y))
@@ -133,6 +154,8 @@ class Pacman(Entity):
         node = self.goal
         while node != pacmanTarget:
             if node not in previous_nodes:  # Pacman cannot reach the goal
+                # Sort unvisited nodes by distance from Pacman's current position
+                self.unvisitedNodes.sort(key=lambda node: heuristic(node, pacmanTarget))
                 for unvisited in self.unvisitedNodes:  # Try all other unvisited nodes
                     previous_nodes, shortest_path = a_star(self.nodes, unvisited, ghosts=self.ghosts)
                     if unvisited in previous_nodes:  # Found a reachable unvisited node
@@ -181,22 +204,30 @@ class Pacman(Entity):
     def distancesToGhosts(self, node):
         distances = []
         for ghost in self.ghosts:
+            if ghost.mode.current == FREIGHT or ghost.mode.current == SPAWN :
+                continue
             vec = node.position - ghost.target.position
             distances.append(vec.magnitudeSquared())
         return distances
     
     def closestGhost(self):
         distances = self.distancesToGhosts(self.node)
+        if len(distances) == 0:
+            return None
         index = distances.index(min(distances))
         return list(self.ghosts)[index]
     
     def goalDirectionFlee(self, directions):
         distances = []
         for direction in directions:
-            vec = self.node.position + self.directions[direction]*TILEWIDTH - self.closestGhost().position
+            try:
+                vec = self.node.position + self.directions[direction]*TILEWIDTH - self.closestGhost().position
+            except:
+                return choice(directions)
             distances.append(vec.magnitudeSquared())
         index = distances.index(max(distances))
         return directions[index]
+
     
 
     def FSM_decision(self):
@@ -208,8 +239,11 @@ class Pacman(Entity):
             self.myState = choice(self.states)
 
     def advancedFSM(self):
-        distance_to_ghost = min(self.distancesToGhosts(self.node))
-
+        distances_to_ghosts = self.distancesToGhosts(self.node)
+        if len(distances_to_ghosts) != 0:
+            distance_to_ghost = min(distances_to_ghosts)
+        else:
+            distance_to_ghost = 1000000000
         new_state = self.FSM.updateState(distance_to_ghost, self.a_star_failed)
 
         # print(new_state)

@@ -19,14 +19,14 @@ class Transition(object):
                 return self.flee_2_seek(distance_to_ghost, a_star_failed)
 
     def seek_2_flee(self, distance_to_ghost, a_star_failed):
-        if distance_to_ghost < 100 or a_star_failed:
+        if distance_to_ghost < 1500 or a_star_failed:
             print("seek -> flee")
             return True
         else:
             return False
         
     def flee_2_seek(self, distance_to_ghost, a_star_failed):
-        if distance_to_ghost > 200 and not a_star_failed:
+        if distance_to_ghost > 2000 and not a_star_failed:
             print("flee -> seek")
             return True
         else:
