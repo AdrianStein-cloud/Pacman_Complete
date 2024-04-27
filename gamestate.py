@@ -1,11 +1,11 @@
 from copy import deepcopy
 
 class GameState:
-    def __init__(self, pacman, powerpellets, score, fruit, ghosts = None, pinky = None, inky = None, clyde = None, blinky = None):
+    def __init__(self, pacman, pellets, powerpellets, score, fruit, ghosts = None, pinky = None, inky = None, clyde = None, blinky = None):
         
 
         if ghosts is None:
-            #self.pellets = pellets
+            self.pellets = pellets
             self.powerpellets = powerpellets
             self.score = score
             self.fruit = fruit
@@ -15,7 +15,7 @@ class GameState:
             self.clyde = clyde
             self.blinky = blinky
         else:
-            #self.pellets = deepcopy(pellets)
+            self.pellets = deepcopy(pellets)
             self.powerpellets = deepcopy(powerpellets)
             self.score = deepcopy(score)
             self.fruit = deepcopy(fruit)

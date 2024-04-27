@@ -53,7 +53,7 @@ class Pacman(Entity): #https://github.com/knowit/ml-pacman  (Some inspiration fr
         if self.oldAction is not None and old_game_state is not None:
             self.q_table[old_game_state][self.oldAction] = self.q_table[old_game_state][self.oldAction] + self.alpha * (reward + (self.discount * self.compute_max_q_value(directions, game_state)) - self.q_table[old_game_state][self.oldAction])
 
-        self.oldGameState = GameState(game_state.pacman, game_state.powerpellets, game_state.score, game_state.fruit, pinky=game_state.pinky, inky=game_state.inky, clyde=game_state.clyde, blinky=game_state.blinky)
+        self.oldGameState = GameState(game_state.pacman, game_state.pellets, game_state.powerpellets, game_state.score, game_state.fruit, pinky=game_state.pinky, inky=game_state.inky, clyde=game_state.clyde, blinky=game_state.blinky)
         self.oldAction = action
 
 
@@ -106,7 +106,7 @@ class Pacman(Entity): #https://github.com/knowit/ml-pacman  (Some inspiration fr
             self.oldGameState = None
             self.oldAction = None
         print('Saving model')
-        save_pickle('./q_table_nopellets', self.q_table, True)
+        save_pickle('./q_table', self.q_table, True)
         self.alive = False
         self.direction = STOP
 
@@ -117,7 +117,7 @@ class Pacman(Entity): #https://github.com/knowit/ml-pacman  (Some inspiration fr
                 directions.append(key)
         return directions
     
-    def loadModel(self, model_path='./q_table_nopellets.pkl'):
+    def loadModel(self, model_path='./q_table.pkl'):
         try:
             self.q_table = load_pickle(model_path)
         except:
@@ -140,7 +140,7 @@ class Pacman(Entity): #https://github.com/knowit/ml-pacman  (Some inspiration fr
         if self.overshotTarget(): # The direction method is only called when pacman has reached a node
             self.node = self.target
             directions = self.validDirections()
-            direction = self.directionMethod(directions, GameState(self, self.gameStateElements[0], self.gameStateElements[1], self.gameStateElements[2], ghosts=self.gameStateElements[3]), self.oldGameState)
+            direction = self.directionMethod(directions, GameState(self, self.gameStateElements[0], self.gameStateElements[1], self.gameStateElements[2], self.gameStateElements[3], ghosts=self.gameStateElements[4]), self.oldGameState)
             self.target = self.getNewTarget(direction)
             if self.target is not self.node:
                 self.direction = direction
