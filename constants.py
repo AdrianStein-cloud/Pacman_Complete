@@ -1,3 +1,5 @@
+from enum import Enum
+
 TILEWIDTH = 16
 TILEHEIGHT = 16
 NROWS = 36
@@ -42,3 +44,14 @@ LEVELTXT = 1
 READYTXT = 2
 PAUSETXT = 3
 GAMEOVERTXT = 4
+
+class ActionEvent(Enum):
+    PELLET = 1
+    CAPTURED_BY_GHOST = 2
+    POWER_PELLET = 3
+    OUT_OF_LIVES = 4
+    GHOST_FRIGHTENED = 5
+    CAPTURED_FRIGHTENED_GHOST = 6
+    NONE = 8
+    WON = 9
+    LOST = 10

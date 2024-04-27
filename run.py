@@ -11,6 +11,7 @@ from text import TextGroup
 from sprites import LifeSprites
 from sprites import MazeSprites
 from mazedata import MazeData
+from gamestate import GameState
 
 class GameController(object):
     def __init__(self):
@@ -33,6 +34,7 @@ class GameController(object):
         self.fruitCaptured = []
         self.fruitNode = None
         self.mazedata = MazeData()
+        self.trainingMode = True
 
     def setBackground(self):
         self.background_norm = pygame.surface.Surface(SCREENSIZE).convert()
@@ -66,6 +68,8 @@ class GameController(object):
         self.ghosts.inky.startNode.denyAccess(RIGHT, self.ghosts.inky)
         self.ghosts.clyde.startNode.denyAccess(LEFT, self.ghosts.clyde)
         self.mazedata.obj.denyGhostsAccess(self.ghosts, self.nodes)
+
+        self.pacman.setGameStateElements([self.pellets.powerpellets, self.score, self.fruit, self.ghosts])
 
     def startGame_old(self):      
         self.mazedata.loadMaze(self.level)#######
@@ -178,6 +182,7 @@ class GameController(object):
                 elif ghost.mode.current is not SPAWN:
                     if self.pacman.alive:
                         self.lives -=  1
+                        self.pacman.setLives(self.lives)
                         self.lifesprites.removeImage()
                         self.pacman.die()               
                         self.ghosts.hide()
@@ -225,7 +230,7 @@ class GameController(object):
     def restartGame(self):
         self.lives = 5
         self.level = 0
-        self.pause.paused = True
+        self.pause.paused = not self.trainingMode
         self.fruit = None
         self.startGame()
         self.score = 0
@@ -236,7 +241,7 @@ class GameController(object):
         self.fruitCaptured = []
 
     def resetLevel(self):
-        self.pause.paused = True
+        self.pause.paused = not self.trainingMode
         self.pacman.reset()
         self.ghosts.reset()
         self.fruit = None
