@@ -1,13 +1,31 @@
-import pygame
-from pygame.locals import *
 from vector import Vector2
-from constants import *
+from constants import (
+    BLINKY,
+    CLYDE,
+    DOWN,
+    FREIGHT,
+    GHOST,
+    INKY,
+    NCOLS,
+    NROWS,
+    ORANGE,
+    PINK,
+    PINKY,
+    RED,
+    SCATTER,
+    CHASE,
+    SPAWN,
+    TEAL,
+    TILEHEIGHT,
+    TILEWIDTH,
+)
 from entity import Entity
 from modes import ModeController
 from sprites import GhostSprites
 
+
 class Ghost(Entity):
-    def __init__(self, node, pacman=None, blinky=None):
+    def __init__(self, node, pacman: Entity):
         Entity.__init__(self, node)
         self.name = GHOST
         self.points = 200
@@ -15,8 +33,8 @@ class Ghost(Entity):
         self.directionMethod = self.goalDirection
         self.pacman = pacman
         self.mode = ModeController(self)
-        self.blinky = blinky
         self.homeNode = node
+        self.sprites: GhostSprites
 
     def reset(self):
         Entity.reset(self)
@@ -47,79 +65,91 @@ class Ghost(Entity):
     def startSpawn(self):
         self.mode.setSpawnMode()
         if self.mode.current == SPAWN:
-            self.setSpeed(150*5)
+            self.setSpeed(150)
             self.directionMethod = self.goalDirection
             self.spawn()
 
     def startFreight(self):
         self.mode.setFreightMode()
         if self.mode.current == FREIGHT:
-            self.setSpeed(50*5)
-            self.directionMethod = self.randomDirection         
+            self.setSpeed(50)
+            self.directionMethod = self.randomDirection
 
     def normalMode(self):
-        self.setSpeed(100*5)
+        self.setSpeed(100)
         self.directionMethod = self.goalDirection
         self.homeNode.denyAccess(DOWN, self)
 
 
-
-
 class Blinky(Ghost):
-    def __init__(self, node, pacman=None, blinky=None):
-        Ghost.__init__(self, node, pacman, blinky)
+    def __init__(self, node, pacman=None):
+        Ghost.__init__(self, node, pacman)
         self.name = BLINKY
         self.color = RED
         self.sprites = GhostSprites(self)
 
 
 class Pinky(Ghost):
-    def __init__(self, node, pacman=None, blinky=None):
-        Ghost.__init__(self, node, pacman, blinky)
+    def __init__(self, node, pacman=None):
+        Ghost.__init__(self, node, pacman)
         self.name = PINKY
         self.color = PINK
         self.sprites = GhostSprites(self)
 
     def scatter(self):
-        self.goal = Vector2(TILEWIDTH*NCOLS, 0)
+        self.goal = Vector2(TILEWIDTH * NCOLS, 0)
 
     def chase(self):
-        self.goal = self.pacman.position + self.pacman.directions[self.pacman.direction] * TILEWIDTH * 4
+        self.goal = (
+            self.pacman.position
+            + self.pacman.directions[self.pacman.direction] * TILEWIDTH * 4
+        )
 
 
 class Inky(Ghost):
-    def __init__(self, node, pacman=None, blinky=None):
-        Ghost.__init__(self, node, pacman, blinky)
+    def __init__(self, node, pacman: Entity, blinky: Entity):
+        Ghost.__init__(self, node, pacman)
         self.name = INKY
         self.color = TEAL
         self.sprites = GhostSprites(self)
+        self.blinky = blinky
 
     def scatter(self):
-        self.goal = Vector2(TILEWIDTH*NCOLS, TILEHEIGHT*NROWS)
+        self.goal = Vector2(TILEWIDTH * NCOLS, TILEHEIGHT * NROWS)
 
     def chase(self):
-        vec1 = self.pacman.position + self.pacman.directions[self.pacman.direction] * TILEWIDTH * 2
+        vec1 = (
+            self.pacman.position
+            + self.pacman.directions[self.pacman.direction] * TILEWIDTH * 2
+        )
         vec2 = (vec1 - self.blinky.position) * 2
         self.goal = self.blinky.position + vec2
 
 
 class Clyde(Ghost):
-    def __init__(self, node, pacman=None, blinky=None):
-        Ghost.__init__(self, node, pacman, blinky)
+    def __init__(self, node, pacman: Entity):
+        Ghost.__init__(
+            self,
+            node,
+            pacman,
+        )
         self.name = CLYDE
         self.color = ORANGE
         self.sprites = GhostSprites(self)
 
     def scatter(self):
-        self.goal = Vector2(0, TILEHEIGHT*NROWS)
+        self.goal = Vector2(0, TILEHEIGHT * NROWS)
 
     def chase(self):
         d = self.pacman.position - self.position
         ds = d.magnitudeSquared()
-        if ds <= (TILEWIDTH * 8)**2:
+        if ds <= (TILEWIDTH * 8) ** 2:
             self.scatter()
         else:
-            self.goal = self.pacman.position + self.pacman.directions[self.pacman.direction] * TILEWIDTH * 4
+            self.goal = (
+                self.pacman.position
+                + self.pacman.directions[self.pacman.direction] * TILEWIDTH * 4
+            )
 
 
 class GhostGroup(object):
@@ -169,4 +199,3 @@ class GhostGroup(object):
     def render(self, screen):
         for ghost in self:
             ghost.render(screen)
-

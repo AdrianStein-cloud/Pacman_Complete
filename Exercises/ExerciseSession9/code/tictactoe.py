@@ -94,13 +94,13 @@ class State:
 
     def generateRandBoard(self):
         board = np.zeros((BOARD_ROWS, BOARD_COLS))
-        for row in range(1,BOARD_ROWS):
+        for row in range(1, BOARD_ROWS):
             for col in range(BOARD_COLS):
-                if random.uniform(0,1) > 0.5:
-                    if random.uniform(0,1) > 0.5:
-                        board[row,col] = 1
+                if random.uniform(0, 1) > 0.5:
+                    if random.uniform(0, 1) > 0.5:
+                        board[row, col] = 1
                     else:
-                        board[row,col] = -1
+                        board[row, col] = -1
         return board
 
     def play(self, iterations=100):
@@ -108,18 +108,20 @@ class State:
             if i % 1000 == 0:
                 print("Iterations {}".format(i))
             while not self.isEnd:
-                rand_nu = random.uniform(0,1)
-                if rand_nu < self.p1.walk_len_nu: 
+                rand_nu = random.uniform(0, 1)
+                if rand_nu < self.p1.walk_len_nu:
                     self.board = self.generateRandBoard()
                 # Player 1
                 positions = self.availablePositions()
-                rand_rho = random.uniform(0,1)
+                rand_rho = random.uniform(0, 1)
                 if rand_rho < self.p1.exploration_rho:
                     # take random action
                     idx = np.random.choice(len(positions))
                     p1_action = positions[idx]
                 else:
-                    p1_action = self.p1.chooseAction(positions, self.board, self.playerSymbol)
+                    p1_action = self.p1.chooseAction(
+                        positions, self.board, self.playerSymbol
+                    )
                 # take action and update board state
                 self.updateState(p1_action)
                 board_hash = self.getHash()
@@ -139,7 +141,9 @@ class State:
                 else:
                     # Player 2
                     positions = self.availablePositions()
-                    p2_action = self.p2.chooseAction(positions, self.board, self.playerSymbol)
+                    p2_action = self.p2.chooseAction(
+                        positions, self.board, self.playerSymbol
+                    )
                     self.updateState(p2_action)
                     board_hash = self.getHash()
                     self.p2.addState(board_hash)
@@ -153,7 +157,6 @@ class State:
                         self.p2.reset()
                         self.reset()
                         break
-
 
     # play with human
     def play2(self):
@@ -193,22 +196,29 @@ class State:
     def showBoard(self):
         # p1: x  p2: o
         for i in range(0, BOARD_ROWS):
-            print('-------------')
-            out = '| '
+            print("-------------")
+            out = "| "
             for j in range(0, BOARD_COLS):
                 if self.board[i, j] == 1:
-                    token = 'x'
+                    token = "x"
                 if self.board[i, j] == -1:
-                    token = 'o'
+                    token = "o"
                 if self.board[i, j] == 0:
-                    token = ' '
-                out += token + ' | '
+                    token = " "
+                out += token + " | "
             print(out)
-        print('-------------')
+        print("-------------")
 
 
 class Player:
-    def __init__(self, name, exploration_rho=0.3, lr_alpha=0.2, discount_rate_gamma=0.9, walk_len_nu=0.2):
+    def __init__(
+        self,
+        name,
+        exploration_rho=0.3,
+        lr_alpha=0.2,
+        discount_rate_gamma=0.9,
+        walk_len_nu=0.2,
+    ):
         self.name = name
         self.states = []  # record all positions taken
         self.exploration_rho = exploration_rho
@@ -229,20 +239,20 @@ class Player:
             next_board[position] = symbol
             next_boardHash = self.getHash(next_board)
             if self.states_value.get(next_boardHash) is None:
-                value = 0 
-            else: 
+                value = 0
+            else:
                 value = self.states_value.get(next_boardHash)
             # print("value", value)
             if value > value_max:
                 value_max = value
                 action = position
                 duplicates = []
-                duplicates.append(action) 
+                duplicates.append(action)
             # if there are multiple max values, pick one randomly
             if value == value_max:
                 duplicates.append(position)
         # print("{} takes action {}".format(self.name, action))
-        if len(duplicates)> 1:
+        if len(duplicates) > 1:
             return random.choice(duplicates)
         else:
             return action
@@ -257,19 +267,21 @@ class Player:
             if self.states_value.get(st) is None:
                 self.states_value[st] = 0
             Q = self.states_value[st]
-            self.states_value[st] = Q * (1 - self.lr_alpha) + self.lr_alpha * (self.discount_rate_gamma * reward)
+            self.states_value[st] = Q * (1 - self.lr_alpha) + self.lr_alpha * (
+                self.discount_rate_gamma * reward
+            )
             reward = self.states_value[st]
 
     def reset(self):
         self.states = []
 
     def savePolicy(self):
-        fw = open('policy_' + str(self.name), 'wb')
+        fw = open("policy_" + str(self.name), "wb")
         pickle.dump(self.states_value, fw)
         fw.close()
 
     def loadPolicy(self, file):
-        fr = open(file, 'rb')
+        fr = open(file, "rb")
         self.states_value = pickle.load(fr)
         fr.close()
 
@@ -311,12 +323,12 @@ if __name__ == "__main__":
 
     # NU: The Length of Walk
     # number of iterations that will be carried out in a sequence of connected actions.
-    
-    exploration_rho=0.3
-    lr_alpha=0.2
-    discount_rate_gamma=0.9
+
+    exploration_rho = 0.3
+    lr_alpha = 0.2
+    discount_rate_gamma = 0.9
     walk_len_nu = 0.2
-    
+
     # training
     p1 = Player("p1", exploration_rho, lr_alpha, discount_rate_gamma, walk_len_nu)
     p2 = Player("p2", exploration_rho, lr_alpha, discount_rate_gamma, walk_len_nu)

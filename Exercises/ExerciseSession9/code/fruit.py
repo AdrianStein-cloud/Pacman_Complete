@@ -1,7 +1,7 @@
-import pygame
 from entity import Entity
-from constants import *
+from constants import FRUIT, GREEN, RIGHT
 from sprites import FruitSprites
+
 
 class Fruit(Entity):
     def __init__(self, node, level=0):
@@ -11,7 +11,7 @@ class Fruit(Entity):
         self.lifespan = 5
         self.timer = 0
         self.destroy = False
-        self.points = 100 + level*20
+        self.points = 100 + level * 20
         self.setBetweenNodes(RIGHT)
         self.sprites = FruitSprites(self, level)
 
