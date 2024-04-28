@@ -1,5 +1,3 @@
-from constants import *
-
 class Animator(object):
     def __init__(self, frames=[], speed=20, loop=True):
         self.frames = frames
@@ -22,7 +20,7 @@ class Animator(object):
             else:
                 self.finished = True
                 self.current_frame -= 1
-   
+
         return self.frames[self.current_frame]
 
     def nextFrame(self, dt):
@@ -30,9 +28,3 @@ class Animator(object):
         if self.dt >= (1.0 / self.speed):
             self.current_frame += 1
             self.dt = 0
-
-
-
-
-
-                        

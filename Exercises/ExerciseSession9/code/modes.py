@@ -1,4 +1,5 @@
-from constants import *
+from constants import FREIGHT, SCATTER, CHASE, SPAWN
+
 
 class MainMode(object):
     def __init__(self):
@@ -15,12 +16,12 @@ class MainMode(object):
 
     def scatter(self):
         self.mode = SCATTER
-        self.time = 7/5
+        self.time = 7
         self.timer = 0
 
     def chase(self):
         self.mode = CHASE
-        self.time = 20/5
+        self.time = 20
         self.timer = 0
 
 
@@ -30,7 +31,7 @@ class ModeController(object):
         self.time = None
         self.mainmode = MainMode()
         self.current = self.mainmode.mode
-        self.entity = entity 
+        self.entity = entity
 
     def update(self, dt):
         self.mainmode.update(dt)
@@ -51,7 +52,7 @@ class ModeController(object):
     def setFreightMode(self):
         if self.current in [SCATTER, CHASE]:
             self.timer = 0
-            self.time = 7/5
+            self.time = 7
             self.current = FREIGHT
         elif self.current is FREIGHT:
             self.timer = 0
