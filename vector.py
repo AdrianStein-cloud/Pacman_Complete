@@ -1,5 +1,6 @@
 import math
 
+
 class Vector2(object):
     def __init__(self, x=0, y=0):
         self.x = x
@@ -20,7 +21,9 @@ class Vector2(object):
 
     def __div__(self, scalar):
         if scalar != 0:
-            return Vector2(self.x / float(scalar), self.y / float(scalar))
+            return Vector2(
+                int(float(self.x) / float(scalar)), int(float(self.y) / float(scalar))
+            )
         return None
 
     def __truediv__(self, scalar):
@@ -48,4 +51,4 @@ class Vector2(object):
         return int(self.x), int(self.y)
 
     def __str__(self):
-        return "<"+str(self.x)+", "+str(self.y)+">"
+        return "<" + str(self.x) + ", " + str(self.y) + ">"

@@ -1,19 +1,29 @@
+from __future__ import annotations
+
+# avoiding circular dependency
+from typing import TYPE_CHECKING, Any
+
 import pygame
-from pygame.locals import *
-from vector import Vector2
-from constants import *
+
+from constants import DOWN, LEFT, PACMAN, PORTAL, RIGHT, STOP, UP, YELLOW
 from entity import Entity
 from sprites import PacmanSprites
 
+
 class Pacman(Entity):
     def __init__(self, node):
-        Entity.__init__(self, node )
-        self.name = PACMAN    
+        Entity.__init__(self, node)
+        self.name = PACMAN
         self.color = YELLOW
         self.direction = LEFT
         self.setBetweenNodes(LEFT)
         self.alive = True
         self.sprites = PacmanSprites(self)
+        self.learntDirection = LEFT
+        self.lives = None
+
+    def setLives(self, lives):
+        self.lives = lives
 
     def reset(self):
         Entity.reset(self)
@@ -27,10 +37,10 @@ class Pacman(Entity):
         self.alive = False
         self.direction = STOP
 
-    def update(self, dt):	
+    def update(self, dt):
         self.sprites.update(dt)
-        self.position += self.directions[self.direction]*self.speed*dt
-        direction = self.getValidKey()
+        self.position += self.directions[self.direction] * self.speed * dt
+        direction = int(self.learntDirection)
         if self.overshotTarget():
             self.node = self.target
             if self.node.neighbors[PORTAL] is not None:
@@ -44,35 +54,36 @@ class Pacman(Entity):
             if self.target is self.node:
                 self.direction = STOP
             self.setPosition()
-        else: 
+
+        else:
             if self.oppositeDirection(direction):
                 self.reverseDirection()
 
     def getValidKey(self):
         key_pressed = pygame.key.get_pressed()
-        if key_pressed[K_UP]:
+        if key_pressed[pygame.K_UP]:
             return UP
-        if key_pressed[K_DOWN]:
+        if key_pressed[pygame.K_DOWN]:
             return DOWN
-        if key_pressed[K_LEFT]:
+        if key_pressed[pygame.K_LEFT]:
             return LEFT
-        if key_pressed[K_RIGHT]:
+        if key_pressed[pygame.K_RIGHT]:
             return RIGHT
-        return STOP  
+        return STOP
 
     def eatPellets(self, pelletList):
         for pellet in pelletList:
             if self.collideCheck(pellet):
                 return pellet
-        return None    
-    
+        return None
+
     def collideGhost(self, ghost):
         return self.collideCheck(ghost)
 
     def collideCheck(self, other):
         d = self.position - other.position
         dSquared = d.magnitudeSquared()
-        rSquared = (self.collideRadius + other.collideRadius)**2
+        rSquared = (self.collideRadius + other.collideRadius) ** 2
         if dSquared <= rSquared:
             return True
         return False
