@@ -37,6 +37,9 @@ class Vector2(object):
 
     def magnitudeSquared(self):
         return self.x**2 + self.y**2
+    
+    def distance(self, other):
+        return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
 
     def magnitude(self):
         return math.sqrt(self.magnitudeSquared())

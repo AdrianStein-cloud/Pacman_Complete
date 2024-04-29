@@ -143,7 +143,7 @@ class GameController(object):
         self.ghosts.inky.startNode.denyAccess(RIGHT, self.ghosts.inky)
         self.ghosts.clyde.startNode.denyAccess(LEFT, self.ghosts.clyde)
         self.mazedata.obj.denyGhostsAccess(self.ghosts, self.nodes)
-        self.setPacmanInRandomPosition()
+        #self.setPacmanInRandomPosition()
 
     def update(self):
         TIMESCALE = 2.0

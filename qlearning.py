@@ -17,7 +17,7 @@ from constants import UP, DOWN, RIGHT, LEFT
 
 
 class State:
-    def __init__(self, playerPosition: Vector2, inkyPosition: Vector2, blinkyPosition: Vector2, clydePosition: Vector2, pinkyPosition: Vector2, powerpellets, fruit) -> None:
+    def __init__(self, playerPosition: Vector2, inkyPosition: Vector2, blinkyPosition: Vector2, clydePosition: Vector2, pinkyPosition: Vector2, fruit, pellets) -> None:
         # TODO: Add more variables in the state so that the agent can account for more things in its environment
         # examples: (ghosts,)
         # warning: The more variables you add, the more space it will have search and it will take more time to train
@@ -26,8 +26,12 @@ class State:
         self.blinkyPosition = blinkyPosition.asTuple()
         self.clydePosition = clydePosition.asTuple()
         self.pinkyPosition = pinkyPosition.asTuple()
-        self.powerpellets = powerpellets
-        self.fruit = fruit
+        self.powerpellets = pellets.powerpellets
+        if fruit is not None:
+            self.fruit = fruit.position.asTuple()
+        else:
+            self.fruit = None
+        self.closestPellet = self.findClosestPellet(playerPosition, pellets).position.asTuple()
 
     def __str__(self) -> str:
         result = "{}.{}".format(self.playerPosition[0], self.playerPosition[1]) + "," + "{}.{}".format(self.inkyPosition[0], self.inkyPosition[1]) + "," + "{}.{}".format(self.blinkyPosition[0], self.blinkyPosition[1]) + "," + "{}.{}".format(self.clydePosition[0], self.clydePosition[1]) + "," + "{}.{}".format(self.pinkyPosition[0], self.pinkyPosition[1])
@@ -35,9 +39,20 @@ class State:
             powerpelletPosition = powerpellet.position.asTuple()
             result += "," + "{}.{}".format(powerpelletPosition[0], powerpelletPosition[1])
         if self.fruit is not None:
-            fruitPosition = self.fruit.position.asTuple()
-            result += "," + "{}.{}".format(fruitPosition[0], fruitPosition[1])
+            result += "," + "{}.{}".format(self.fruit[0], self.fruit[1])
+        result += "," + "{}.{}".format(self.closestPellet[0], self.closestPellet[1])
+        
         return result
+    
+    def findClosestPellet(self, playerPosition, pellets):
+        closestPellet = None
+        minDistance = float('inf')
+        for pellet in pellets.pelletList:
+            distance = pellet.position.distance(playerPosition)
+            if distance < minDistance:
+                minDistance = distance
+                closestPellet = pellet
+        return closestPellet
 
 
 class Action(IntEnum):
@@ -98,11 +113,11 @@ class ReinforcementProblem:
         self.game.restartGameRandom()
 
     def getCurrentState(self) -> State:
-        return State(self.game.pacman.position, self.game.ghosts.inky.position, self.game.ghosts.blinky.position, self.game.ghosts.clyde.position, self.game.ghosts.pinky.position, self.game.pellets.powerpellets, self.game.fruit)
+        return State(self.game.pacman.position, self.game.ghosts.inky.position, self.game.ghosts.blinky.position, self.game.ghosts.clyde.position, self.game.ghosts.pinky.position, self.game.fruit, self.game.pellets)
 
     # Choose a random starting state for the problem.
     def getRandomState(self) -> State:
-        self.game.setPacmanInRandomPosition()
+        #self.game.setPacmanInRandomPosition()
         return self.getCurrentState()
 
     # Get the available actions for the given state.
@@ -148,9 +163,9 @@ class ReinforcementProblem:
         reward = 0
         score = self.game.score - previousScore
         if score == 0:
-            reward = -0.2
+            reward = -2
         else:
-            reward = self.game.score - previousScore
+            reward = (self.game.score - previousScore) * 2
         if previousLives is not None and self.game.pacman.lives < previousLives:
             reward = -100
         newState = self.getCurrentState()
@@ -225,11 +240,15 @@ def QLearning(
         # And update the state.
         state = newState
 
-
 if __name__ == "__main__":
     # The store for Q-values, we use this to make decisions based on
     # the learning.
-    store = QValueStore("training")
+    store = QValueStore("training2")
     problem = ReinforcementProblem()
 
-    QLearning(problem, 10000, 0.7, 0.75, 0.2, 0.01)
+    # Train the model
+    # QLearning(problem, 1000000, 0.7, 0.75, 0.2, 0.00)
+
+    # Test the model
+    QLearning(problem, 10000, 0.7, 0.75, 0.0, 0.00)
+
