@@ -19,7 +19,7 @@ class Pacman(Entity):
         self.setBetweenNodes(LEFT)
         self.alive = True
         self.sprites = PacmanSprites(self)
-        self.learntDirection = LEFT
+        self.learntDirection = STOP
         self.lives = None
 
     def setLives(self, lives):

@@ -3,6 +3,7 @@ from __future__ import annotations
 # avoiding circular dependency
 from genericpath import exists
 import os
+import time
 from typing import TYPE_CHECKING, Any
 from enum import IntEnum
 import pickle
@@ -82,6 +83,29 @@ class QValueStore:
             return value
         else:
             return 0.0
+        
+    def mergeAndSave(self):
+        while os.path.exists('lockfile'):
+            # If the lockfile exists, wait for a bit before trying again
+            time.sleep(0.1)
+        # Create the lockfile
+        with open('lockfile', 'w') as lf:
+            lf.write('Lockfile for saving Q-value store')
+        try:
+            if os.path.exists(self.filePath):
+                with open(self.filePath, "rb") as fr:
+                    fileStorage = pickle.load(fr)
+                    for key, value in fileStorage.items():
+                        if key in self.storage:
+                            self.storage[key] = (self.storage[key] + value) / 2
+                        else:
+                            self.storage[key] = value
+            with open(self.filePath, "wb") as fw:
+                pickle.dump(self.storage, fw)
+        finally:
+            # Delete the lockfile
+            os.remove('lockfile')
+        print("Saving: dictionary size", len(self.storage))
 
     def getBestAction(self, state: State, possibleActions: list[Action]) -> Action:
         return max(possibleActions, key=lambda action: self.getQValue(state, action))
@@ -113,7 +137,7 @@ class ReinforcementProblem:
         self.game.restartGameRandom()
 
     def getCurrentState(self) -> State:
-        return State(self.game.pacman.position, self.game.ghosts.inky.position, self.game.ghosts.blinky.position, self.game.ghosts.clyde.position, self.game.ghosts.pinky.position, self.game.fruit, self.game.pellets)
+        return State(self.game.pacman.target.position, self.game.ghosts.inky.target.position, self.game.ghosts.blinky.target.position, self.game.ghosts.clyde.target.position, self.game.ghosts.pinky.target.position, self.game.fruit, self.game.pellets)
 
     # Choose a random starting state for the problem.
     def getRandomState(self) -> State:
@@ -159,7 +183,6 @@ class ReinforcementProblem:
         previousLives = self.game.pacman.lives
         self.game.pacman.learntDirection = action
         self.updateGameForSeconds(0.1)
-        # TODO: Adjust the reward function to make it learn better
         reward = 0
         score = self.game.score - previousScore
         if score == 0:
@@ -168,6 +191,10 @@ class ReinforcementProblem:
             reward = (self.game.score - previousScore) * 2
         if previousLives is not None and self.game.pacman.lives < previousLives:
             reward = -100
+
+        if self.game.pellets.isEmpty():
+            reward = 100000
+
         newState = self.getCurrentState()
         return reward, newState
 
@@ -204,7 +231,7 @@ def QLearning(
 
         if i % saveIterations == 0:
             print("Saving at iteration:", i)
-            store.save()
+            store.mergeAndSave()
         # Pick a new state every once in a while.
         if random.uniform(0, 1) < walkLength:
             state = problem.getRandomState()
@@ -243,12 +270,12 @@ def QLearning(
 if __name__ == "__main__":
     # The store for Q-values, we use this to make decisions based on
     # the learning.
-    store = QValueStore("training2")
+    store = QValueStore("training3")
     problem = ReinforcementProblem()
 
     # Train the model
-    # QLearning(problem, 1000000, 0.7, 0.75, 0.2, 0.00)
+    QLearning(problem, 1000000, 0.7, 0.75, 0.2, 0.00)
 
     # Test the model
-    QLearning(problem, 10000, 0.7, 0.75, 0.0, 0.00)
+    # QLearning(problem, 10000, 0.7, 0.75, 0.0, 0.00)
 

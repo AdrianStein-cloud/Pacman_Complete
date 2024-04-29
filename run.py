@@ -146,7 +146,7 @@ class GameController(object):
         #self.setPacmanInRandomPosition()
 
     def update(self):
-        TIMESCALE = 2.0
+        TIMESCALE = 3.0
 
         dt = self.clock.tick(60) / 1000.0 * TIMESCALE
         self.textgroup.update(dt)
