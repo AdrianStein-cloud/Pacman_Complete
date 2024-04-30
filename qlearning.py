@@ -19,30 +19,29 @@ from constants import UP, DOWN, RIGHT, LEFT
 
 
 class State:
-    def __init__(self, playerPosition: Vector2, inkyPosition: Vector2, blinkyPosition: Vector2, clydePosition: Vector2, pinkyPosition: Vector2, fruit, pellets) -> None:
+    def __init__(self, playerPosition: Vector2, ghosts, pellets, exclusions) -> None:
         # TODO: Add more variables in the state so that the agent can account for more things in its environment
         # examples: (ghosts,)
         # warning: The more variables you add, the more space it will have search and it will take more time to train
         self.playerPosition = playerPosition.asTuple()
-        self.inkyPosition = inkyPosition.asTuple()
-        self.blinkyPosition = blinkyPosition.asTuple()
-        self.clydePosition = clydePosition.asTuple()
-        self.pinkyPosition = pinkyPosition.asTuple()
+        self.ghostTargetPositions = []
+        
+        for ghost in ghosts:
+            if ghost.target.position.asTuple() not in exclusions and ghost.target.position.distance(playerPosition) < 250 and ghost.mode.current != 2:
+                self.ghostTargetPositions.append(ghost.target.position.asTuple())
+
         self.powerpellets = pellets.powerpellets
-        if fruit is not None:
-            self.fruit = fruit.position.asTuple()
-        else:
-            self.fruit = None
+
         self.closestPellet = self.findClosestPellet(playerPosition, pellets).position.asTuple()
 
     def __str__(self) -> str:
-        result = "{}.{}".format(self.playerPosition[0], self.playerPosition[1]) + "," + "{}.{}".format(self.inkyPosition[0], self.inkyPosition[1]) + "," + "{}.{}".format(self.blinkyPosition[0], self.blinkyPosition[1]) + "," + "{}.{}".format(self.clydePosition[0], self.clydePosition[1]) + "," + "{}.{}".format(self.pinkyPosition[0], self.pinkyPosition[1])
+        result = "{}.{}".format(self.playerPosition[0], self.playerPosition[1])
+        for ghostTargetPosition in self.ghostTargetPositions:
+            result += ",g{}.{}".format(ghostTargetPosition[0], ghostTargetPosition[1])
         for powerpellet in self.powerpellets:
             powerpelletPosition = powerpellet.position.asTuple()
-            result += "," + "{}.{}".format(powerpelletPosition[0], powerpelletPosition[1])
-        if self.fruit is not None:
-            result += "," + "{}.{}".format(self.fruit[0], self.fruit[1])
-        result += "," + "{}.{}".format(self.closestPellet[0], self.closestPellet[1])
+            result += ",P" + "{}.{}".format(powerpelletPosition[0], powerpelletPosition[1])
+        result += ",p" + "{}.{}".format(self.closestPellet[0], self.closestPellet[1])
         
         return result
     
@@ -97,7 +96,7 @@ class QValueStore:
                         fileStorage = pickle.load(fr)
                         for key, value in fileStorage.items():
                             if key in self.storage:
-                                self.storage[key] = (self.storage[key] + value) / 2
+                                self.storage[key] = max(self.storage[key], value)
                             else:
                                 self.storage[key] = value
                 with open(self.filePath, "wb") as fw:
@@ -132,12 +131,14 @@ class QValueStore:
 
 
 class ReinforcementProblem:
+
     def __init__(self) -> None:
         self.game = GameController()
         self.game.restartGameRandom()
+        self.exclusions = [(248.0, 272), (248.0, 256), (248.0, 288), (184.0, 272), (184.0, 288), (184.0, 256)]
 
     def getCurrentState(self) -> State:
-        return State(self.game.pacman.target.position, self.game.ghosts.inky.target.position, self.game.ghosts.blinky.target.position, self.game.ghosts.clyde.target.position, self.game.ghosts.pinky.target.position, self.game.fruit, self.game.pellets)
+        return State(self.game.pacman.target.position, self.game.ghosts.ghosts, self.game.pellets, self.exclusions)
 
     # Choose a random starting state for the problem.
     def getRandomState(self) -> State:
@@ -187,12 +188,11 @@ class ReinforcementProblem:
         reward = 0
         score = self.game.score - previousScore
         if score == 0:
-            reward = -2
+            reward = -5
         else:
-            reward = (self.game.score - previousScore) / 3
-            reward += previousNumberOfPellets - len(self.game.pellets.pelletList) * 30
+            reward = previousNumberOfPellets - len(self.game.pellets.pelletList) * 50
         if previousLives is not None and self.game.pacman.lives < previousLives:
-            reward = -10000
+            reward = -1000
 
         if self.game.pellets.isEmpty():
             reward = 100000
@@ -225,7 +225,7 @@ def QLearning(
 ):
     # Get a starting state.
     state = problem.getRandomState()
-    saveIterations = 500
+    saveIterations = 2000
     # Repeat a number of times.
     for i in range(iterations + 1):
         # Decay the learning rate over time
@@ -273,12 +273,12 @@ def QLearning(
 if __name__ == "__main__":
     # The store for Q-values, we use this to make decisions based on
     # the learning.
-    store = QValueStore("training_high_pellet_reward")
+    store = QValueStore("training_excl_ghosts")
     problem = ReinforcementProblem()
 
     # Train the model
     # QLearning(problem, 30000, 0.7, 0.75, 0.1, 0.00)
 
     # Test the model
-    QLearning(problem, 10000, 0.7, 0.75, 0.2, 0.00)
+    QLearning(problem, 20000, 0.7, 0.75, 0.0, 0.00)
 
