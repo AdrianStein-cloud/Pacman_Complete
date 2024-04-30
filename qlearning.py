@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 from enum import IntEnum
 import pickle
 import random
+from filelock import FileLock
 
 import pygame
 
@@ -85,26 +86,25 @@ class QValueStore:
             return 0.0
         
     def mergeAndSave(self):
-        while os.path.exists('lockfile'):
-            # If the lockfile exists, wait for a bit before trying again
-            time.sleep(0.1)
-        # Create the lockfile
-        with open('lockfile', 'w') as lf:
-            lf.write('Lockfile for saving Q-value store')
-        try:
-            if os.path.exists(self.filePath):
-                with open(self.filePath, "rb") as fr:
-                    fileStorage = pickle.load(fr)
-                    for key, value in fileStorage.items():
-                        if key in self.storage:
-                            self.storage[key] = (self.storage[key] + value) / 2
-                        else:
-                            self.storage[key] = value
-            with open(self.filePath, "wb") as fw:
-                pickle.dump(self.storage, fw)
-        finally:
-            # Delete the lockfile
-            os.remove('lockfile')
+        lock = FileLock("lockfile.lock")
+
+        print("Requesting lock...")
+
+        with lock:
+            try:
+                if os.path.exists(self.filePath):
+                    with open(self.filePath, "rb") as fr:
+                        fileStorage = pickle.load(fr)
+                        for key, value in fileStorage.items():
+                            if key in self.storage:
+                                self.storage[key] = (self.storage[key] + value) / 2
+                            else:
+                                self.storage[key] = value
+                with open(self.filePath, "wb") as fw:
+                    pickle.dump(self.storage, fw)
+            except Exception as e:
+                print(f"An error occurred while merging and saving: {e}")
+
         print("Saving: dictionary size", len(self.storage))
 
     def getBestAction(self, state: State, possibleActions: list[Action]) -> Action:
@@ -190,7 +190,7 @@ class ReinforcementProblem:
         else:
             reward = (self.game.score - previousScore) * 2
         if previousLives is not None and self.game.pacman.lives < previousLives:
-            reward = -100
+            reward = -10000
 
         if self.game.pellets.isEmpty():
             reward = 100000
@@ -225,11 +225,12 @@ def QLearning(
     state = problem.getRandomState()
     saveIterations = 500
     # Repeat a number of times.
-    for i in range(iterations):
+    for i in range(iterations + 1):
         # Decay the learning rate over time
-        learningRate = initialLearningRate * (1 - i / iterations)
+        # learningRate = initialLearningRate * (1 - i / iterations)
+        learningRate = initialLearningRate
 
-        if i % saveIterations == 0:
+        if i % saveIterations == 0 and i > 0:
             print("Saving at iteration:", i)
             store.mergeAndSave()
         # Pick a new state every once in a while.
@@ -270,12 +271,12 @@ def QLearning(
 if __name__ == "__main__":
     # The store for Q-values, we use this to make decisions based on
     # the learning.
-    store = QValueStore("training3")
+    store = QValueStore("training8")
     problem = ReinforcementProblem()
 
     # Train the model
-    QLearning(problem, 1000000, 0.7, 0.75, 0.2, 0.00)
+    # QLearning(problem, 30000, 0.7, 0.75, 0.1, 0.00)
 
     # Test the model
-    # QLearning(problem, 10000, 0.7, 0.75, 0.0, 0.00)
+    QLearning(problem, 5000, 0.7, 0.75, 0.1, 0.00)
 
