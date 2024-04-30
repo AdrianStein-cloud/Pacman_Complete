@@ -1,4 +1,4 @@
-for /l %%x in (1, 1, 50) do (
+for /l %%x in (1, 1, 70) do (
   	timeout /t 1
 	start python qlearning.py
 )

@@ -181,6 +181,7 @@ class ReinforcementProblem:
     def takeAction(self, state: State, action: Action) -> tuple[float, State]:
         previousScore = self.game.score
         previousLives = self.game.pacman.lives
+        previousNumberOfPellets = len(self.game.pellets.pelletList)
         self.game.pacman.learntDirection = action
         self.updateGameForSeconds(0.1)
         reward = 0
@@ -188,7 +189,8 @@ class ReinforcementProblem:
         if score == 0:
             reward = -2
         else:
-            reward = (self.game.score - previousScore) * 2
+            reward = (self.game.score - previousScore) / 3
+            reward += previousNumberOfPellets - len(self.game.pellets.pelletList) * 30
         if previousLives is not None and self.game.pacman.lives < previousLives:
             reward = -10000
 
@@ -271,12 +273,12 @@ def QLearning(
 if __name__ == "__main__":
     # The store for Q-values, we use this to make decisions based on
     # the learning.
-    store = QValueStore("training8")
+    store = QValueStore("training_high_pellet_reward")
     problem = ReinforcementProblem()
 
     # Train the model
     # QLearning(problem, 30000, 0.7, 0.75, 0.1, 0.00)
 
     # Test the model
-    QLearning(problem, 5000, 0.7, 0.75, 0.1, 0.00)
+    QLearning(problem, 10000, 0.7, 0.75, 0.2, 0.00)
 
