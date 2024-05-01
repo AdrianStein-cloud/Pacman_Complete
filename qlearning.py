@@ -23,7 +23,7 @@ class State:
     def __init__(self, nodes, pacman, ghosts, pellets) -> None:
         
         self.nodes = nodes
-        self.path = self.dijkstra(nodes, pacman, 120)
+        self.path = self.dijkstra(nodes, pacman, 100)
         self.pacman = pacman
         self.ghosts = ghosts
         self.closestPellet = self.findClosestPellet(pacman.target.position, pellets).asTuple()
@@ -35,9 +35,10 @@ class State:
         pacmanTarget = self.nodes.getVectorFromLUTNode(pacmanTarget)
 
         for ghost in self.ghosts:
-            ghostTarget = ghost.target
-            ghostTarget = self.nodes.getVectorFromLUTNode(ghostTarget)
-            ghostPositions.append(((ghostTarget[0] - pacmanTarget[0]), (ghostTarget[1] - pacmanTarget[1])))
+            if ghost.mode.current != 2:
+                ghostTarget = ghost.target
+                ghostTarget = self.nodes.getVectorFromLUTNode(ghostTarget)
+                ghostPositions.append(((ghostTarget[0] - pacmanTarget[0]), (ghostTarget[1] - pacmanTarget[1])))
 
         result = "p{}.{}".format(self.closestPellet[0], self.closestPellet[1])
         for node in self.path:
@@ -242,7 +243,7 @@ def QLearning(
 ):
     # Get a starting state.
     state = problem.getRandomState()
-    saveIterations = 2000
+    saveIterations = 500
     # Repeat a number of times.
     for i in range(iterations + 1):
         # Decay the learning rate over time
@@ -290,12 +291,12 @@ def QLearning(
 if __name__ == "__main__":
     # The store for Q-values, we use this to make decisions based on
     # the learning.
-    store = QValueStore("training_dijkstra")
+    store = QValueStore("training_dijkstra_100")
     problem = ReinforcementProblem()
 
     # Train the model
     # QLearning(problem, 30000, 0.7, 0.75, 0.1, 0.00)
 
     # Test the model
-    QLearning(problem, 20000, 0.7, 0.75, 0.0, 0.00)
+    QLearning(problem, 10000, 0.7, 0.75, 0.2, 0.00)
 

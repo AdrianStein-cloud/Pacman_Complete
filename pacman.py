@@ -21,7 +21,7 @@ class Pacman(Entity):
         self.sprites = PacmanSprites(self)
         self.learntDirection = STOP
         self.lives = None
-        self.debugMode = True
+        self.debugMode = False
         self.path = None
 
     def setLives(self, lives):
