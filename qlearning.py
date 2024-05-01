@@ -9,6 +9,7 @@ from enum import IntEnum
 import pickle
 import random
 from filelock import FileLock
+from algorithms import dijkstra
 
 import pygame
 
@@ -19,29 +20,31 @@ from constants import UP, DOWN, RIGHT, LEFT
 
 
 class State:
-    def __init__(self, playerPosition: Vector2, ghosts, pellets, exclusions) -> None:
-        # TODO: Add more variables in the state so that the agent can account for more things in its environment
-        # examples: (ghosts,)
-        # warning: The more variables you add, the more space it will have search and it will take more time to train
-        self.playerPosition = playerPosition.asTuple()
-        self.ghostTargetPositions = []
+    def __init__(self, nodes, pacman, ghosts, pellets) -> None:
         
-        for ghost in ghosts:
-            if ghost.target.position.asTuple() not in exclusions and ghost.target.position.distance(playerPosition) < 250 and ghost.mode.current != 2:
-                self.ghostTargetPositions.append(ghost.target.position.asTuple())
+        self.nodes = nodes
+        self.path = self.dijkstra(nodes, pacman, 120)
+        self.pacman = pacman
+        self.ghosts = ghosts
+        self.closestPellet = self.findClosestPellet(pacman.target.position, pellets).asTuple()
 
-        self.powerpellets = pellets.powerpellets
-
-        self.closestPellet = self.findClosestPellet(playerPosition, pellets).position.asTuple()
 
     def __str__(self) -> str:
-        result = "{}.{}".format(self.playerPosition[0], self.playerPosition[1])
-        for ghostTargetPosition in self.ghostTargetPositions:
-            result += ",g{}.{}".format(ghostTargetPosition[0], ghostTargetPosition[1])
-        for powerpellet in self.powerpellets:
-            powerpelletPosition = powerpellet.position.asTuple()
-            result += ",P" + "{}.{}".format(powerpelletPosition[0], powerpelletPosition[1])
-        result += ",p" + "{}.{}".format(self.closestPellet[0], self.closestPellet[1])
+        ghostPositions = []
+        pacmanTarget = self.pacman.target
+        pacmanTarget = self.nodes.getVectorFromLUTNode(pacmanTarget)
+
+        for ghost in self.ghosts:
+            ghostTarget = ghost.target
+            ghostTarget = self.nodes.getVectorFromLUTNode(ghostTarget)
+            ghostPositions.append(((ghostTarget[0] - pacmanTarget[0]), (ghostTarget[1] - pacmanTarget[1])))
+
+        result = "p{}.{}".format(self.closestPellet[0], self.closestPellet[1])
+        for node in self.path:
+            if node not in ghostPositions:
+                result += ",{}.{}".format(node[0], node[1])
+            else:
+                result += ",g{}.{}".format(node[0], node[1])
         
         return result
     
@@ -53,7 +56,22 @@ class State:
             if distance < minDistance:
                 minDistance = distance
                 closestPellet = pellet
+        closestPellet = closestPellet.position - playerPosition
         return closestPellet
+    
+    def dijkstra (self, nodes, pacman, depth):
+        pacmanTarget = pacman.target
+        pacmanTarget = nodes.getVectorFromLUTNode(pacmanTarget)
+        previous_nodes, shortest_path = dijkstra(nodes, pacmanTarget, depth)
+
+        path = []
+
+        for node in previous_nodes:
+            path.append(((node[0] - pacmanTarget[0]), (node[1] - pacmanTarget[1])))
+
+        pacman.setPath(previous_nodes)
+
+        return path
 
 
 class Action(IntEnum):
@@ -135,10 +153,9 @@ class ReinforcementProblem:
     def __init__(self) -> None:
         self.game = GameController()
         self.game.restartGameRandom()
-        self.exclusions = [(248.0, 272), (248.0, 256), (248.0, 288), (184.0, 272), (184.0, 288), (184.0, 256)]
 
     def getCurrentState(self) -> State:
-        return State(self.game.pacman.target.position, self.game.ghosts.ghosts, self.game.pellets, self.exclusions)
+        return State(self.game.nodes, self.game.pacman, self.game.ghosts.ghosts, self.game.pellets)
 
     # Choose a random starting state for the problem.
     def getRandomState(self) -> State:
@@ -188,14 +205,14 @@ class ReinforcementProblem:
         reward = 0
         score = self.game.score - previousScore
         if score == 0:
-            reward = -5
+            reward = -1
         else:
-            reward = previousNumberOfPellets - len(self.game.pellets.pelletList) * 50
+            reward = previousNumberOfPellets - len(self.game.pellets.pelletList) * 20
         if previousLives is not None and self.game.pacman.lives < previousLives:
-            reward = -1000
+            reward = -500
 
         if self.game.pellets.isEmpty():
-            reward = 100000
+            reward = 10000
 
         newState = self.getCurrentState()
         return reward, newState
@@ -273,7 +290,7 @@ def QLearning(
 if __name__ == "__main__":
     # The store for Q-values, we use this to make decisions based on
     # the learning.
-    store = QValueStore("training_excl_ghosts")
+    store = QValueStore("training_dijkstra")
     problem = ReinforcementProblem()
 
     # Train the model

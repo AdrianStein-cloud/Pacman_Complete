@@ -60,6 +60,7 @@ class NodeGroup(object):
         self.connectHorizontally(data)
         self.connectVertically(data)
         self.homekey = None
+        self.costs = self.get_nodes()
 
     def readMazeFile(self, textfile):
         return np.loadtxt(textfile, dtype="<U1")
@@ -195,3 +196,49 @@ class NodeGroup(object):
     def render(self, screen):
         for node in self.nodesLUT.values():
             node.render(screen)
+
+
+    #############################
+    # returns a list of all nodes in (x,y) format
+    def getListOfNodesVector(self):
+        return list(self.nodesLUT)
+
+    # returns a node in (x,y) format
+    def getVectorFromLUTNode(self, node):
+        id = list(self.nodesLUT.values()).index(node)
+        listOfVectors = self.getListOfNodesVector()
+        return listOfVectors[id]
+
+    # returns neighbors of a node in LUT form
+    def getNeighborsObj(self, node):
+        node_obj = self.getNodeFromPixels(node[0], node[1])
+        return node_obj.neighbors
+
+    # returns neighbors in (x,y) format
+    def getNeighbors(self, node):
+        neighs_LUT = self.getNeighborsObj(node)
+        vals = neighs_LUT.values()
+        neighs_LUT2 = []
+        for direction in vals:
+            if not direction is None:
+                neighs_LUT2.append(direction)
+        list_neighs = []
+        for neigh in neighs_LUT2:
+            list_neighs.append(self.getVectorFromLUTNode(neigh))
+        return list_neighs
+
+    # used to initialize node system for Dijkstra algorithm
+    def get_nodes(self):
+        costs_dict = {}
+        listOfNodesPixels = self.getListOfNodesVector()
+        for node in listOfNodesPixels:
+            neigh = self.getNeighborsObj(node)
+            temp_neighs = neigh.values()
+            temp_list = []
+            for direction in temp_neighs:
+                if not direction is None:
+                    temp_list.append(1)
+                else:
+                    temp_list.append(None)
+            costs_dict[node] = temp_list
+        return costs_dict

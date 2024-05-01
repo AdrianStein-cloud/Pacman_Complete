@@ -1,7 +1,7 @@
 import pygame
 
 from vector import Vector2
-from constants import LEFT, PORTAL, RIGHT, STOP, TILEHEIGHT, TILEWIDTH, UP, DOWN, WHITE
+from constants import LEFT, PORTAL, RED, RIGHT, STOP, TILEHEIGHT, TILEWIDTH, UP, DOWN, WHITE, GREEN
 from random import randint
 
 
@@ -26,6 +26,8 @@ class Entity(object):
         self.directionMethod = self.randomDirection
         self.setStartNode(node)
         self.image: pygame.Surface
+        self.path = None
+        self.debugMode = False
 
     def setPosition(self):
         self.position = self.node.position.copy()
@@ -134,3 +136,12 @@ class Entity(object):
             else:
                 p = self.position.asInt()
                 pygame.draw.circle(screen, self.color, p, self.radius)
+            if self.debugMode:
+                    # if path is not none, for each node in path, draw line between nodes
+                    if self.path is not None:
+                        for node in self.path:
+                            pygame.draw.circle(screen, RED, node, 5)
+
+                    # render target
+                    if self.target is not None:
+                        pygame.draw.circle(screen, GREEN, self.target.position.asInt(), 5)
