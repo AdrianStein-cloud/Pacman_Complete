@@ -160,7 +160,7 @@ class ReinforcementProblem:
 
     # Choose a random starting state for the problem.
     def getRandomState(self) -> State:
-        #self.game.setPacmanInRandomPosition()
+        # self.game.setPacmanInRandomPosition()
         return self.getCurrentState()
 
     # Get the available actions for the given state.
@@ -214,6 +214,8 @@ class ReinforcementProblem:
 
         if self.game.pellets.isEmpty():
             reward = 10000
+            with open('winfile', 'w') as lf:
+                lf.write('I won!')
 
         newState = self.getCurrentState()
         return reward, newState
@@ -295,8 +297,5 @@ if __name__ == "__main__":
     problem = ReinforcementProblem()
 
     # Train the model
-    # QLearning(problem, 30000, 0.7, 0.75, 0.1, 0.00)
-
-    # Test the model
-    QLearning(problem, 10000, 0.7, 0.75, 0.2, 0.00)
+    QLearning(problem, 10000, 0.7, 0.75, 0.0, 0.00)
 
