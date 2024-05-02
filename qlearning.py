@@ -252,7 +252,7 @@ def QLearning(
 ):
     # Get a starting state.
     state = problem.getRandomState()
-    saveIterations = 500
+    saveIterations = 250
     # Repeat a number of times.
     for i in range(iterations + 1):
         # Decay the learning rate over time
@@ -300,9 +300,9 @@ def QLearning(
 if __name__ == "__main__":
     # The store for Q-values, we use this to make decisions based on
     # the learning.
-    store = QValueStore("training_all_nodes")
+    store = QValueStore("training_all_nodes_2")
     problem = ReinforcementProblem()
 
     # Train the model
-    QLearning(problem, 20000, 0.7, 0.75, 0.2, 0.00)
+    QLearning(problem, 5000, 0.7, 0.75, 0.2, 0.00)
 

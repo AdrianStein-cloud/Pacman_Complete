@@ -42,6 +42,13 @@ class Pacman(Entity):
         self.alive = False
         self.direction = STOP
 
+    def validDirections(self): # Returns a list of valid directions, opposite direction is included.
+        directions = []
+        for key in [UP, DOWN, LEFT, RIGHT]:
+            if self.validDirection(key):
+                directions.append(key)
+        return directions
+
     def update(self, dt):
         self.sprites.update(dt)
         self.position += self.directions[self.direction] * self.speed * dt
@@ -56,8 +63,8 @@ class Pacman(Entity):
             else:
                 self.target = self.getNewTarget(self.direction)
 
-            if self.target is self.node:
-                self.direction = STOP
+            # if self.target is self.node:
+            #     self.direction = STOP
             self.setPosition()
 
         else:
